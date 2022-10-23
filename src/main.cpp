@@ -16,7 +16,10 @@ float minTemp = 22.0;
 float maxTemp = 41.0;
 float intPoint, val, a, b, c, d, ii;
 float centerTemp;
-int i, j;
+int x, y, i, j;
+const byte MLX90640_address = 0x33; //Default 7-bit unshifted address of the MLX90640
+float **interpolated = NULL;
+uint16_t *imageData = NULL;
 // uncomment *one* of the below
 #define PRINT_TEMPERATURES
 
@@ -25,6 +28,10 @@ int i, j;
 
 #define min(a, b) ((a) < (b) ? (a) : (b))
 #define max(a, b) ((a) > (b) ? (a) : (b))
+
+#define O_WIDTH 160
+#define O_HEIGHT 120
+#define O_RATIO O_WIDTH / 32
 /**
 #define C_BLUE tft.color565(0,0,255)
 #define C_RED tft.color565(255,0,0)
@@ -36,6 +43,11 @@ int i, j;
 #define C_GREY tft.color565(127,127,127)
 **/
 
+// Linear interpolation
+float lerp(float v0, float v1, float t)
+{
+  return v0 + t * (v1 - v0);
+}
 // Get color for temp value.
 uint16_t getColor(float val)
 {
@@ -87,6 +99,26 @@ void setup()
 {
   delay(1000);
   Serial.begin(115200);
+    SPI.begin();
+  SPI.setFrequency(80000000L);
+  Wire.begin();
+  Wire.setClock(400000); // Increase I2C clock speed to 400kHz
+  Wire.beginTransmission((uint8_t)MLX90640_address);
+  if (Wire.endTransmission() != 0) {
+    Serial.println("MLX90640 not detected at default I2C address. Please check wiring.");
+  }
+  else {
+    Serial.println("MLX90640 online!");
+  }
+  // Get device parameters - We only have to do this once
+
+  // if (status != 0) Serial.println("Failed to load system parameters");
+  // status = MLX90640_ExtractParameters(eeMLX90640, &mlx90640);
+  // if (status != 0) Serial.println("Parameter extraction failed");
+  // // Set refresh rate
+  // MLX90640_SetRefreshRate(MLX90640_address, 0x05); // Set rate to 8Hz effective - Works at 800kHz
+  // // Once EEPROM has been read at 400kHz we can increase
+  Wire.setClock(800000);
   delay(100);
   tft.init();
   tft.setRotation(0);
@@ -148,6 +180,12 @@ void setup()
     Serial.println("Interleave");
   }
 
+
+
+   int status;
+   uint16_t eeMLX90640[832];
+   //status = MLX90640_DumpEE(MLX90640_address, eeMLX90640);
+ 
   mlx.setResolution(MLX90640_ADC_16BIT);
   Serial.print("Current resolution: ");
   mlx90640_resolution_t res = mlx.getResolution();
@@ -197,6 +235,13 @@ void setup()
     Serial.println("64 Hz");
     break;
   }
+imageData = (uint16_t *)malloc(O_WIDTH * O_HEIGHT * sizeof(uint16_t));
+  // Prepare interpolated array
+  interpolated = (float **)malloc(O_HEIGHT * sizeof(float *));
+  for (int i = 0; i < O_HEIGHT; i++)
+  {
+    interpolated[i] = (float *)malloc(O_WIDTH * sizeof(float));
+  }
 }
 
 void setTempScale()
@@ -238,12 +283,12 @@ void drawLegend()
   // tft.setTextSize(4);
   tft.setCursor(130, 169);
   tft.setTextColor(TFT_WHITE, TFT_BLACK, true);
-  tft.print(String(minTemp, 1)+"  "+String(maxTemp, 1));
+  tft.print(String(minTemp, 1) + "  " + String(maxTemp, 1));
 
   // tft.setTextSize(4);
   tft.setCursor(120, 169);
   tft.setTextColor(TFT_WHITE, TFT_BLACK, true);
-  //tft.print(String(maxTemp, 1));
+  // tft.print(String(maxTemp, 1));
 
   // tft.setTextFont(NULL);
 }
@@ -251,22 +296,27 @@ void drawLegend()
 int row;
 float temp, temp2;
 
-// void interpolate() {
-//   for (row=0; row<24; row++) {
-//     for (x=0; x<O_WIDTH; x++) {
-//       temp  = frame[(31 - (x/7)) + (row*32) + 1];
-//       temp2 = frame[(31 - (x/7)) + (row*32)];
-//       interpolated[row*7][x] = lerp(temp, temp2, x%7/7.0);
-//     }
-//   }
-//   for (x=0; x<O_WIDTH; x++) {
-//     for (y=0; y<O_HEIGHT; y++) {
-//       temp  = interpolated[y-y%7][x];
-//       temp2 = interpolated[min((y-y%7)+7, O_HEIGHT-7)][x];
-//       interpolated[y][x] = lerp(temp, temp2, 1);//y%7/7.0);
-//     }
-//   }
-// }
+void interpolate()
+{
+  for (row = 0; row < 24; row++)
+  {
+    for (x = 0; x < O_WIDTH; x++)
+    {
+      temp = frame[(31 - (x / 7)) + (row * 32) + 1];
+      temp2 = frame[(31 - (x / 7)) + (row * 32)];
+      interpolated[row * 7][x] = lerp(temp, temp2, x % 7 / 7.0);
+    }
+  }
+  for (x = 0; x < O_WIDTH; x++)
+  {
+    for (y = 0; y < O_HEIGHT; y++)
+    {
+      temp = interpolated[y - y % 7][x];
+      temp2 = interpolated[min((y - y % 7) + 7, O_HEIGHT - 7)][x];
+      interpolated[y][x] = lerp(temp, temp2, 1); // y%7/7.0);
+    }
+  }
+}
 // Draw a circle + measured value.
 void drawMeasurement()
 {
@@ -297,14 +347,29 @@ void loop()
   setTempScale();
   setAbcd();
   drawLegend();
-
-  for (uint8_t h = 0; h < 24; h++)
+  if (INTERPOLATE)
   {
-    for (uint8_t w = 0; w < 32; w++)
+    for (uint8_t h = 0; h < 24; h++)
     {
-      float t = frame[h * 32 + w];
-      tft.fillRect(6 + h * 5, 6 + w * 5, 5, 5, getColor(t));
+      for (uint8_t w = 0; w < 32; w++)
+      {
+        float t = frame[h * 32 + w];
+        tft.fillRect(6 + h * 5, 6 + w * 5, 5, 5, getColor(t));
+        imageData[(y * O_WIDTH) + x] = getColor(interpolated[y][x]);
+      }
     }
+    tft.pushImage(8, 8, O_WIDTH, O_HEIGHT, imageData);
   }
-  drawMeasurement();
+
+  else
+    for (uint8_t h = 0; h < 24; h++)
+    {
+      for (uint8_t w = 0; w < 32; w++)
+      {
+        float t = frame[h * 32 + w];
+        tft.fillRect(6 + h * 5, 6 + w * 5, 5, 5, getColor(t));
+      }
+    }
 }
+
+ 
