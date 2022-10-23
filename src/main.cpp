@@ -15,7 +15,7 @@ byte red, green, blue;
 float minTemp = 22.0;
 float maxTemp = 41.0;
 float intPoint, val, a, b, c, d, ii;
-int i;
+int i,j;
 // uncomment *one* of the below
 #define PRINT_TEMPERATURES
 
@@ -219,6 +219,27 @@ void setAbcd()
   d = minTemp + (maxTemp - minTemp) * 0.8182;
 }
 
+// Draw a legend.
+void drawLegend() {
+  float inc = (maxTemp - minTemp) / 180;
+  j = 180;
+  for (ii = minTemp; ii < maxTemp; ii += inc) {
+    tft.drawFastHLine(220, j--, 20, getColor(ii));
+  }
+
+  // tft.setTextFont(2);
+  // tft.setTextSize(1);
+  // tft.setCursor(8, 272);
+  // tft.setTextColor(TFT_WHITE, TFT_BLACK);
+  // tft.print(String(minTemp).substring(0, 5));
+
+  // tft.setCursor(192, 272);
+  // tft.setTextColor(TFT_WHITE, TFT_BLACK);
+  // tft.print(String(maxTemp).substring(0, 5));
+
+  // tft.setTextFont(NULL);
+}
+
 void loop()
 {
   delay(500);
@@ -229,6 +250,7 @@ void loop()
   }
   setTempScale();
   setAbcd();
+  drawLegend();
  
   for (uint8_t h = 0; h < 24; h++)
   {
@@ -236,11 +258,9 @@ void loop()
     {
       float t = frame[h * 32 + w];
 
-   //   Serial.print(getColor(t), 1);
-    //  Serial.print(", ");
-
  
-      tft.fillRect(4 + w * 3, 4 + h * 3, 3, 3, getColor(t));
+ 
+     tft.fillRect(6 + w * 5, 6 + h * 5, 5, 5, getColor(t));
  
     }
     Serial.println();
