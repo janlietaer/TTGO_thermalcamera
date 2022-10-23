@@ -1,11 +1,5 @@
 #include <Arduino.h>
 #include <Adafruit_MLX90640.h>
-#include <ArduinoJson.h>
-#include <WiFi.h>
-#include <WebServer.h>
-#include <ESPmDNS.h>
-#include <WiFiUdp.h>
-#include <ArduinoOTA.h>
  
 
 Adafruit_MLX90640 mlx;
@@ -16,9 +10,9 @@ float frame[32*24]; // buffer for full frame of temperatures
 //#define PRINT_ASCIIART
 
 void setup() {
-   delay(1000);
-  Serial.begin(115200);
   delay(1000);
+  Serial.begin(115200);
+  delay(100);
 
   Serial.println("Adafruit MLX90640 Simple Test");
   if (! mlx.begin(MLX90640_I2CADDR_DEFAULT, &Wire)) {
