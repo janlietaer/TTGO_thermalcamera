@@ -15,7 +15,8 @@ byte red, green, blue;
 float minTemp = 22.0;
 float maxTemp = 41.0;
 float intPoint, val, a, b, c, d, ii;
-int i,j;
+String waarde;
+int i, j;
 // uncomment *one* of the below
 #define PRINT_TEMPERATURES
 
@@ -103,7 +104,7 @@ void setup()
   }
   tft.setSwapBytes(true);
   delay(100);
-  tft.setRotation(0);
+  tft.setRotation(1);
   int i = 1;
   while (i--)
   {
@@ -117,7 +118,7 @@ void setup()
 
   tft.fillScreen(TFT_BLACK);
 
-  tft.setRotation(1);
+  tft.setRotation(0);
 
   tft.setTextDatum(0);
 
@@ -147,7 +148,7 @@ void setup()
     Serial.println("Interleave");
   }
 
-  mlx.setResolution(MLX90640_ADC_18BIT);
+  mlx.setResolution(MLX90640_ADC_16BIT);
   Serial.print("Current resolution: ");
   mlx90640_resolution_t res = mlx.getResolution();
   switch (res)
@@ -166,7 +167,7 @@ void setup()
     break;
   }
 
-  mlx.setRefreshRate(MLX90640_2_HZ);
+  mlx.setRefreshRate(MLX90640_4_HZ);
   Serial.print("Current frame rate: ");
   mlx90640_refreshrate_t rate = mlx.getRefreshRate();
   switch (rate)
@@ -208,7 +209,6 @@ void setTempScale()
     minTemp = min(minTemp, frame[i]);
     maxTemp = max(maxTemp, frame[i]);
   }
-  
 }
 
 void setAbcd()
@@ -220,29 +220,41 @@ void setAbcd()
 }
 
 // Draw a legend.
-void drawLegend() {
+void drawLegend()
+{
   float inc = (maxTemp - minTemp) / 180;
-  j = 180;
-  for (ii = minTemp; ii < maxTemp; ii += inc) {
-    tft.drawFastHLine(220, j--, 20, getColor(ii));
+  j = 0;
+  for (ii = minTemp; ii < maxTemp; ii += inc)
+  {
+    tft.drawFastVLine( j++, 220,20, getColor(ii));
   }
 
-  // tft.setTextFont(2);
-  // tft.setTextSize(1);
-  // tft.setCursor(8, 272);
-  // tft.setTextColor(TFT_WHITE, TFT_BLACK);
-  // tft.print(String(minTemp).substring(0, 5));
+ 
 
-  // tft.setCursor(192, 272);
-  // tft.setTextColor(TFT_WHITE, TFT_BLACK);
-  // tft.print(String(maxTemp).substring(0, 5));
+  // tft.drawRightString(waarde, 45, 200, 4);
+  // waarde = String(maxTemp, 1);
+  //   tft.drawRightString("       ", 130, 200, 4);
+  // tft.drawRightString(waarde, 130, 200, 4);
+
+   tft.setTextFont(4);
+  // tft.setTextSize(4);
+   tft.setCursor(130, 165);
+   tft.setTextColor(TFT_WHITE, TFT_BLACK,true);
+   tft.print(String(minTemp,1));
+
+
+ 
+  // tft.setTextSize(4);
+   tft.setCursor(60, 190);
+   tft.setTextColor(TFT_WHITE, TFT_BLACK,true);
+   tft.print(String(maxTemp,1));
 
   // tft.setTextFont(NULL);
 }
 
 void loop()
 {
-  delay(500);
+ 
   if (mlx.getFrame(frame) != 0)
   {
     Serial.println("Failed");
@@ -251,17 +263,14 @@ void loop()
   setTempScale();
   setAbcd();
   drawLegend();
- 
+
   for (uint8_t h = 0; h < 24; h++)
   {
     for (uint8_t w = 0; w < 32; w++)
     {
       float t = frame[h * 32 + w];
 
- 
- 
-     tft.fillRect(6 + w * 5, 6 + h * 5, 5, 5, getColor(t));
- 
+  tft.fillRect( 6 + h * 5,6 + w * 5, 5, 5, getColor(t));
     }
     Serial.println();
   }
