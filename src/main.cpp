@@ -1,8 +1,12 @@
 #include <Arduino.h>
 #include <Adafruit_MLX90640.h>
  
-
+#include <TFT_eSPI.h>
 Adafruit_MLX90640 mlx;
+
+
+TFT_eSPI tft = TFT_eSPI(135, 240); // Invoke custom library
+
 float frame[32*24]; // buffer for full frame of temperatures
 
 // uncomment *one* of the below
@@ -13,6 +17,39 @@ void setup() {
   delay(1000);
   Serial.begin(115200);
   delay(100);
+    tft.init();
+  tft.setRotation(0);
+  tft.fillScreen(TFT_BLACK);
+  tft.setTextSize(2);
+  tft.setTextColor(TFT_WHITE);
+  tft.setCursor(0, 0);
+  tft.setTextDatum(MC_DATUM);
+  tft.setTextSize(1);
+
+  if (TFT_BL > 0)
+  {                                         // TFT_BL has been set in the TFT_eSPI library in the User Setup file TTGO_T_Display.h
+    pinMode(TFT_BL, OUTPUT);                // Set backlight pin to output mode
+    digitalWrite(TFT_BL, TFT_BACKLIGHT_ON); // Turn backlight on. TFT_BACKLIGHT_ON has been set in the TFT_eSPI library in the User Setup file TTGO_T_Display.h
+  }
+  tft.setSwapBytes(true);
+  delay(100);
+  tft.setRotation(0);
+  int i = 1;
+  while (i--)
+  {
+    tft.fillScreen(TFT_RED);
+    delay(100);
+    tft.fillScreen(TFT_BLUE);
+    delay(100);
+    tft.fillScreen(TFT_GREEN);
+    delay(100);
+  }
+
+  tft.fillScreen(TFT_BLACK);
+
+  tft.setRotation(1);
+
+  tft.setTextDatum(0);
 
   Serial.println("Adafruit MLX90640 Simple Test");
   if (! mlx.begin(MLX90640_I2CADDR_DEFAULT, &Wire)) {
