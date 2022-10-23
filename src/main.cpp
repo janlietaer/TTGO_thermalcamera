@@ -238,12 +238,12 @@ void drawLegend()
   // tft.setTextSize(4);
   tft.setCursor(130, 169);
   tft.setTextColor(TFT_WHITE, TFT_BLACK, true);
-  tft.print(String(minTemp, 1));
+  tft.print(String(minTemp, 1)+"  "+String(maxTemp, 1));
 
   // tft.setTextSize(4);
-  tft.setCursor(40, 195);
+  tft.setCursor(120, 169);
   tft.setTextColor(TFT_WHITE, TFT_BLACK, true);
-  tft.print(String(maxTemp, 1));
+  //tft.print(String(maxTemp, 1));
 
   // tft.setTextFont(NULL);
 }
@@ -283,7 +283,7 @@ void drawMeasurement()
   tft.setTextColor(TFT_WHITE, TFT_BLACK);
   tft.setTextFont(4);
 
-  tft.print(String(centerTemp, 1) + "°C");
+  tft.print(String(centerTemp, 1) + "°C  ");
 }
 
 void loop()
