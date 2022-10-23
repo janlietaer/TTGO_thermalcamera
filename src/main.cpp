@@ -15,7 +15,7 @@ byte red, green, blue;
 float minTemp = 22.0;
 float maxTemp = 41.0;
 float intPoint, val, a, b, c, d, ii;
-String waarde;
+float centerTemp;
 int i, j;
 // uncomment *one* of the below
 #define PRINT_TEMPERATURES
@@ -97,11 +97,11 @@ void setup()
   tft.setTextDatum(MC_DATUM);
   tft.setTextSize(1);
 
-  if (TFT_BL > 0)
-  {                                         // TFT_BL has been set in the TFT_eSPI library in the User Setup file TTGO_T_Display.h
-    pinMode(TFT_BL, OUTPUT);                // Set backlight pin to output mode
-    digitalWrite(TFT_BL, TFT_BACKLIGHT_ON); // Turn backlight on. TFT_BACKLIGHT_ON has been set in the TFT_eSPI library in the User Setup file TTGO_T_Display.h
-  }
+  // if (TFT_BL > 0)
+  // {                                         // TFT_BL has been set in the TFT_eSPI library in the User Setup file TTGO_T_Display.h
+  //   pinMode(TFT_BL, OUTPUT);                // Set backlight pin to output mode
+  //   digitalWrite(TFT_BL, TFT_BACKLIGHT_ON); // Turn backlight on. TFT_BACKLIGHT_ON has been set in the TFT_eSPI library in the User Setup file TTGO_T_Display.h
+  // }
   tft.setSwapBytes(true);
   delay(100);
   tft.setRotation(1);
@@ -226,35 +226,69 @@ void drawLegend()
   j = 0;
   for (ii = minTemp; ii < maxTemp; ii += inc)
   {
-    tft.drawFastVLine( j++, 220,20, getColor(ii));
+    tft.drawFastVLine(j++, 220, 20, getColor(ii));
   }
-
- 
 
   // tft.drawRightString(waarde, 45, 200, 4);
   // waarde = String(maxTemp, 1);
   //   tft.drawRightString("       ", 130, 200, 4);
   // tft.drawRightString(waarde, 130, 200, 4);
 
-   tft.setTextFont(4);
+  tft.setTextFont(4);
   // tft.setTextSize(4);
-   tft.setCursor(130, 165);
-   tft.setTextColor(TFT_WHITE, TFT_BLACK,true);
-   tft.print(String(minTemp,1));
+  tft.setCursor(130, 169);
+  tft.setTextColor(TFT_WHITE, TFT_BLACK, true);
+  tft.print(String(minTemp, 1));
 
-
- 
   // tft.setTextSize(4);
-   tft.setCursor(60, 190);
-   tft.setTextColor(TFT_WHITE, TFT_BLACK,true);
-   tft.print(String(maxTemp,1));
+  tft.setCursor(40, 195);
+  tft.setTextColor(TFT_WHITE, TFT_BLACK, true);
+  tft.print(String(maxTemp, 1));
 
   // tft.setTextFont(NULL);
 }
 
+int row;
+float temp, temp2;
+
+// void interpolate() {
+//   for (row=0; row<24; row++) {
+//     for (x=0; x<O_WIDTH; x++) {
+//       temp  = frame[(31 - (x/7)) + (row*32) + 1];
+//       temp2 = frame[(31 - (x/7)) + (row*32)];
+//       interpolated[row*7][x] = lerp(temp, temp2, x%7/7.0);
+//     }
+//   }
+//   for (x=0; x<O_WIDTH; x++) {
+//     for (y=0; y<O_HEIGHT; y++) {
+//       temp  = interpolated[y-y%7][x];
+//       temp2 = interpolated[min((y-y%7)+7, O_HEIGHT-7)][x];
+//       interpolated[y][x] = lerp(temp, temp2, 1);//y%7/7.0);
+//     }
+//   }
+// }
+// Draw a circle + measured value.
+void drawMeasurement()
+{
+
+  // Mark center measurement
+  tft.drawCircle(70, 8 + 84, 8, TFT_BLACK);
+  tft.drawCircle(70, 8 + 84, 10, TFT_BLACK);
+  tft.drawCircle(70, 8 + 84, 12, TFT_BLACK);
+  // tft.drawRect(70, 8 + 84, 12,12, TFT_BLACK);
+
+  // Measure and print center temperature
+  centerTemp = (frame[383 - 16] + frame[383 - 15] + frame[384 + 15] + frame[384 + 16]) / 4;
+  tft.setCursor(35, 165);
+  tft.setTextColor(TFT_WHITE, TFT_BLACK);
+  tft.setTextFont(4);
+
+  tft.print(String(centerTemp, 1) + "°C");
+}
+
 void loop()
 {
- 
+
   if (mlx.getFrame(frame) != 0)
   {
     Serial.println("Failed");
@@ -269,9 +303,8 @@ void loop()
     for (uint8_t w = 0; w < 32; w++)
     {
       float t = frame[h * 32 + w];
-
-  tft.fillRect( 6 + h * 5,6 + w * 5, 5, 5, getColor(t));
+      tft.fillRect(6 + h * 5, 6 + w * 5, 5, 5, getColor(t));
     }
-    Serial.println();
   }
+  drawMeasurement();
 }
