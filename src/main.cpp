@@ -17,7 +17,7 @@ float maxTemp = 41.0;
 float intPoint, val, a, b, c, d, ii;
 float centerTemp;
 int x, y, i, j;
-const byte MLX90640_address = 0x33; //Default 7-bit unshifted address of the MLX90640
+const byte MLX90640_address = 0x33; // Default 7-bit unshifted address of the MLX90640
 float **interpolated = NULL;
 uint16_t *imageData = NULL;
 // uncomment *one* of the below
@@ -99,15 +99,17 @@ void setup()
 {
   delay(1000);
   Serial.begin(115200);
-    SPI.begin();
+  SPI.begin();
   SPI.setFrequency(80000000L);
   Wire.begin();
   Wire.setClock(400000); // Increase I2C clock speed to 400kHz
   Wire.beginTransmission((uint8_t)MLX90640_address);
-  if (Wire.endTransmission() != 0) {
+  if (Wire.endTransmission() != 0)
+  {
     Serial.println("MLX90640 not detected at default I2C address. Please check wiring.");
   }
-  else {
+  else
+  {
     Serial.println("MLX90640 online!");
   }
   // Get device parameters - We only have to do this once
@@ -180,12 +182,10 @@ void setup()
     Serial.println("Interleave");
   }
 
+  int status;
+  uint16_t eeMLX90640[832];
+  // status = MLX90640_DumpEE(MLX90640_address, eeMLX90640);
 
-
-   int status;
-   uint16_t eeMLX90640[832];
-   //status = MLX90640_DumpEE(MLX90640_address, eeMLX90640);
- 
   mlx.setResolution(MLX90640_ADC_16BIT);
   Serial.print("Current resolution: ");
   mlx90640_resolution_t res = mlx.getResolution();
@@ -235,7 +235,7 @@ void setup()
     Serial.println("64 Hz");
     break;
   }
-imageData = (uint16_t *)malloc(O_WIDTH * O_HEIGHT * sizeof(uint16_t));
+  imageData = (uint16_t *)malloc(O_WIDTH * O_HEIGHT * sizeof(uint16_t));
   // Prepare interpolated array
   interpolated = (float **)malloc(O_HEIGHT * sizeof(float *));
   for (int i = 0; i < O_HEIGHT; i++)
@@ -283,7 +283,7 @@ void drawLegend()
   // tft.setTextSize(4);
   tft.setCursor(130, 169);
   tft.setTextColor(TFT_WHITE, TFT_BLACK, true);
-  tft.print(String(minTemp, 1) + "  " + String(maxTemp, 1));
+  tft.print(String(minTemp, 1) + "  " + String(maxTemp, 1) + "  ");
 
   // tft.setTextSize(4);
   tft.setCursor(120, 169);
@@ -370,6 +370,5 @@ void loop()
         tft.fillRect(6 + h * 5, 6 + w * 5, 5, 5, getColor(t));
       }
     }
+  drawMeasurement();
 }
-
- 
