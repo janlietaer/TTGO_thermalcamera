@@ -120,7 +120,7 @@ void setup()
   // // Set refresh rate
   // MLX90640_SetRefreshRate(MLX90640_address, 0x05); // Set rate to 8Hz effective - Works at 800kHz
   // // Once EEPROM has been read at 400kHz we can increase
-  Wire.setClock(800000);
+  Wire.setClock(1000000);
   delay(100);
   tft.init();
   tft.setRotation(0);
@@ -205,7 +205,7 @@ void setup()
     break;
   }
 
-  mlx.setRefreshRate(MLX90640_4_HZ);
+  mlx.setRefreshRate(MLX90640_32_HZ);
   Serial.print("Current frame rate: ");
   mlx90640_refreshrate_t rate = mlx.getRefreshRate();
   switch (rate)
